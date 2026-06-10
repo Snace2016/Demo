@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+
+{% block content %}
+<div class="form-page">
+    <form method="post" enctype="multipart/form-data" class="form form--wide">
+        {% csrf_token %}
+
+        {% if is_edit %}
+        <div class="form-group">
+            <label>ID товара</label>
+            <input type="text" value="{{ product.id }}" readonly class="input input--readonly">
+        </div>
+        {% endif %}
+
+        <div class="form-group form-group--photo">
+            <label>Фото товара</label>
+            <div class="photo-preview">
+                {% if is_edit and product.image %}
+                    <img src="{{ product|product_image_url }}" alt="Фото товара" id="photo-preview">
+                {% else %}
+                    <img src="{% static 'images/picture.png' %}" alt="Заглушка" id="photo-preview">
+                {% endif %}
+            </div>
+            {{ form.image_file }}
+            {% if form.image_file.errors %}
+                <span class="form-error">{{ form.image_file.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        {% for field in form %}
+            {% if field.name != 'image_file' %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <span class="form-hint">{{ field.help_text }}</span>
+                {% endif %}
+                {% if field.errors %}
+                    <span class="form-error">{{ field.errors.0 }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary">
+                {% if is_edit %}Сохранить{% else %}Добавить{% endif %}
+            </button>
+            <a href="{% if is_edit %}{% url 'product_cancel_edit' product.pk %}{% else %}{% url 'product_list' %}{% endif %}"
+               class="btn btn--secondary">Назад</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('id_image_file')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('photo-preview').src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

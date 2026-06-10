@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-page">
+    <form method="post" class="form form--wide">
+        {% csrf_token %}
+
+        {% if is_edit %}
+        <div class="form-group">
+            <label>Номер заказа</label>
+            <input type="text" value="{{ order.number }}" readonly class="input input--readonly">
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+                <span class="form-hint">{{ field.help_text }}</span>
+            {% endif %}
+            {% if field.errors %}
+                <span class="form-error">{{ field.errors.0 }}</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary">
+                {% if is_edit %}Сохранить{% else %}Добавить{% endif %}
+            </button>
+            <a href="{% url 'order_list' %}" class="btn btn--secondary">Назад</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if can_edit %}
+    <div class="toolbar">
+        <a href="{% url 'order_add' %}" class="btn btn--primary">Добавить заказ</a>
+    </div>
+{% endif %}
+
+<div class="table-wrapper">
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>№ заказа</th>
+                <th>Артикул</th>
+                <th>Статус</th>
+                <th>Дата заказа</th>
+                <th>Дата выдачи</th>
+                <th>Адрес пункта выдачи</th>
+                <th>Клиент</th>
+                <th>Код получения</th>
+                {% if can_edit %}<th>Действия</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr {% if can_edit %}class="order-row--clickable" data-href="{% url 'order_edit' order.pk %}"{% endif %}>
+                <td>{{ order.number }}</td>
+                <td>{{ order.articles_display }}</td>
+                <td>{{ order.status.name }}</td>
+                <td>{{ order.order_date|date:"d.m.Y" }}</td>
+                <td>{{ order.delivery_date|date:"d.m.Y" }}</td>
+                <td>{{ order.pickup_point.address }}</td>
+                <td>{{ order.client.full_name }}</td>
+                <td>{{ order.pickup_code }}</td>
+                {% if can_edit %}
+                <td class="order-table__actions" onclick="event.stopPropagation();">
+                    <a href="{% url 'order_edit' order.pk %}" class="btn btn--small">Изменить</a>
+                    <form method="post" action="{% url 'order_delete' order.pk %}" class="inline-form"
+                          onsubmit="return confirm('Удалить заказ №{{ order.number }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn--small btn--danger">Удалить</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr><td colspan="{% if can_edit %}9{% else %}8{% endif %}">Заказы не найдены</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if can_edit %}
+<script>
+document.querySelectorAll('.order-row--clickable').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('.order-table__actions')) return;
+        window.location.href = row.dataset.href;
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

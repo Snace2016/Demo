@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+
+{% block content %}
+{% if can_edit %}
+    <div class="toolbar">
+        <a href="{% url 'product_add' %}" class="btn btn--primary">Добавить товар</a>
+    </div>
+{% endif %}
+
+{% if can_filter %}
+<div class="filters" id="filters-panel">
+    <div class="filters__search">
+        <label for="search-input">Поиск:</label>
+        <input type="text" id="search-input" placeholder="Поиск по всем текстовым полям..." class="input">
+    </div>
+    <div class="filters__sort">
+        <label for="sort-field">Сортировка:</label>
+        <select id="sort-field" class="select">
+            <option value="">Без сортировки</option>
+            <option value="price-asc">Цена ↑</option>
+            <option value="price-desc">Цена ↓</option>
+            <option value="quantity-asc">Количество ↑</option>
+            <option value="quantity-desc">Количество ↓</option>
+        </select>
+    </div>
+    <div class="filters__discount">
+        <label for="discount-filter">Скидка:</label>
+        <select id="discount-filter" class="select">
+            <option value="all">Все диапазоны</option>
+            <option value="0-10.99">0–10,99%</option>
+            <option value="11-14.99">11–14,99%</option>
+            <option value="15+">15% и более</option>
+        </select>
+    </div>
+</div>
+{% endif %}
+
+<div class="table-wrapper">
+    <table class="product-table" id="product-table">
+        <thead>
+            <tr>
+                <th>Фото</th>
+                <th>Наименование</th>
+                <th>Категория</th>
+                <th>Описание</th>
+                <th>Производитель</th>
+                <th>Поставщик</th>
+                <th>Цена</th>
+                <th>Ед. изм.</th>
+                <th>На складе</th>
+                <th>Скидка</th>
+                {% if can_edit %}<th>Действия</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr class="product-row{% if product.high_discount %} row--high-discount{% endif %}{% if product.is_out_of_stock %} row--out-of-stock{% endif %}{% if can_edit %} product-row--clickable{% endif %}"
+                data-name="{{ product.name|lower }}"
+                data-category="{{ product.category.name|lower }}"
+                data-description="{{ product.description|lower }}"
+                data-manufacturer="{{ product.manufacturer.name|lower }}"
+                data-supplier="{{ product.supplier.name|lower }}"
+                data-article="{{ product.article|lower }}"
+                data-unit="{{ product.unit|lower }}"
+                data-price="{{ product.price }}"
+                data-quantity="{{ product.quantity }}"
+                data-discount="{{ product.discount }}"
+                {% if can_edit %}data-href="{% url 'product_edit' product.pk %}"{% endif %}>
+                <td class="product-table__photo">
+                    <img src="{{ product|product_image_url }}" alt="{{ product.name }}">
+                </td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category.name }}</td>
+                <td class="product-table__desc">{{ product.description|truncatechars:80 }}</td>
+                <td>{{ product.manufacturer.name }}</td>
+                <td>{{ product.supplier.name }}</td>
+                <td class="product-table__price">
+                    {% if product.has_discount %}
+                        <span class="price-old">{{ product.price }} ₽</span>
+                        <span class="price-new">{{ product.final_price }} ₽</span>
+                    {% else %}
+                        <span>{{ product.price }} ₽</span>
+                    {% endif %}
+                </td>
+                <td>{{ product.unit }}</td>
+                <td>{{ product.quantity }}</td>
+                <td>{{ product.discount }}%</td>
+                {% if can_edit %}
+                <td class="product-table__actions" onclick="event.stopPropagation();">
+                    <a href="{% url 'product_edit' product.pk %}" class="btn btn--small">Изменить</a>
+                    <form method="post" action="{% url 'product_delete' product.pk %}" class="inline-form"
+                          onsubmit="return confirm('Вы уверены, что хотите удалить товар «{{ product.name }}»?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn--small btn--danger">Удалить</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr><td colspan="{% if can_edit %}11{% else %}10{% endif %}">Товары не найдены</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not current_user %}
+<div class="guest-actions">
+    <a href="{% url 'login' %}" class="btn btn--primary">Войти в систему</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if can_filter %}
+<script src="{% static 'js/product_filter.js' %}"></script>
+{% endif %}
+{% if can_edit %}
+<script>
+document.querySelectorAll('.product-row--clickable').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('.product-table__actions')) return;
+        window.location.href = row.dataset.href;
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

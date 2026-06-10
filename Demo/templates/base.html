@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title|default:"Система продажи мебели" }}{% endblock %}</title>
+    <link rel="icon" href="{% static 'images/icon.png' %}" type="image/png">
+    <link rel="shortcut icon" href="{% static 'images/icon.png' %}" type="image/png">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="header">
+        <div class="header__logo">
+            <img src="{% static 'images/icon.png' %}" alt="Логотип компании" class="header__logo-img">
+            <span class="header__logo-text">ООО «Мебель»</span>
+        </div>
+        <nav class="header__nav">
+            {% if current_user %}
+                <a href="{% url 'product_list' %}" class="nav-link">Товары</a>
+                {% if current_user.role == 'manager' or current_user.role == 'admin' %}
+                    <a href="{% url 'order_list' %}" class="nav-link">Заказы</a>
+                {% endif %}
+                <span class="header__user">{{ current_user.full_name }}</span>
+                <a href="{% url 'logout' %}" class="btn btn--outline">Выход</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-link">Вход</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="main">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message message--{{ message.tags }}">
+                        <strong>
+                            {% if message.tags == 'error' %}Ошибка
+                            {% elif message.tags == 'warning' %}Предупреждение
+                            {% elif message.tags == 'success' %}Успешно
+                            {% else %}Информация{% endif %}:
+                        </strong>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <h1 class="page-title">{% block page_heading %}{{ page_title }}{% endblock %}</h1>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
